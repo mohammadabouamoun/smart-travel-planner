@@ -1,0 +1,33 @@
+{
+  "description": "Synthetic travel destination dataset (improved v2)",
+  "num_samples": 149,
+  "features": {
+    "name": "Destination name (city, country)",
+    "style": "Primary travel style (Adventure, Relaxation, Culture, Budget, Luxury, Family)",
+    "temp_coldest_month": "Average temperature of the coldest month (\u00b0C)",
+    "temp_warmest_month": "Average temperature of the warmest month (\u00b0C)",
+    "cost_per_day": "Estimated daily cost (USD, accommodation + food + activities)",
+    "tourist_density": "Subjective tourism density category (low/medium/high)",
+    "density_score": "Continuous 0\u2011100 score of tourist density (higher = more crowded)",
+    "has_beach": "Binary: does the destination have good beaches? (1=yes; derived from beach_score \u2265 1)",
+    "beach_score": "Beach quality/availability score (0\u201110)",
+    "hiking_score": "Hiking and outdoor adventure score (0\u201110)",
+    "culture_score": "Cultural attractions score (0\u201110)",
+    "nightlife_score": "Nightlife score (0\u201110)",
+    "safety_index": "Safety perception index (1=very unsafe, 10=extremely safe)",
+    "hemisphere": "Hemisphere (North/South) \u2013 based on curated list",
+    "peak_season": "Most popular tourist season ('summer' or 'spring/fall') \u2013 derived from temperature contrast",
+    "visa_difficulty": "Ease of obtaining a tourist visa ('easy', 'medium', 'hard')",
+    "english_friendly": "Binary: is English widely spoken? (1=yes)"
+  },
+  "generation_notes": "v2 improvements: deduplicated city names, manual style overrides applied, temperature columns renamed to coldest/warmest month (hemisphere\u2011agnostic), activity scores are always continuous (no zero\u2011cut gate), beach_score now consistent with has_beach.",
+  "style_distribution": {
+    "Culture": 36,
+    "Adventure": 31,
+    "Relaxation": 26,
+    "Budget": 21,
+    "Luxury": 19,
+    "Family": 16
+  },
+  "created_at": "20260427_153226"
+}

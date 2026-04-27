@@ -10,6 +10,7 @@ python-dotenv
 scikit-learn
 pandas
 numpy
+scipy
 joblib
 langgraph
 langchain

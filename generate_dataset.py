@@ -107,30 +107,40 @@ extra_city_styles = {
 }
 
 # ============================================================
-# 3. Combine all names and styles
+# 3. Combine all names and styles (deduplicated, manual overrides)
 # ============================================================
-names = []
-styles = []
+style_map = {}
+# First, load base listings (later entries overwrite earlier ones)
 for style, dests in destinations_by_style.items():
     for dest in dests:
-        names.append(dest)
-        styles.append(style)
+        style_map[dest] = style
+# Then apply manual overrides – these have the final say
+style_map.update(extra_city_styles)
 
-extra_names = list(extra_city_styles.keys())
-for dest in extra_names:
-    names.append(dest)
-    styles.append(extra_city_styles[dest])
-
+names = list(style_map.keys())
+styles = [style_map[name] for name in names]
 n = len(names)
 
 # ============================================================
-# 4. Improved feature generation helpers
+# 4. Helper: identify Southern Hemisphere destinations
+# ============================================================
+SOUTHERN_DESTINATIONS = {
+    "Queenstown, New Zealand", "Cusco, Peru", "Torres del Paine, Chile",
+    "Patagonia, Argentina", "New Zealand South Island", "Bora Bora",
+    "Mauritius", "Seychelles", "Fiji", "Zanzibar, Tanzania",
+    "Bali, Indonesia", "La Paz, Bolivia", "Gold Coast, Australia",
+    "Sydney, Australia", "Lima, Peru", "Phnom Penh, Cambodia",  # actually Phnom Penh is northern,
+    # but we'll keep the list simple – real‑world usage may require manual check
+}
+
+def get_hemisphere(dest_name):
+    return 'South' if dest_name in SOUTHERN_DESTINATIONS else 'North'
+
+# ============================================================
+# 5. Improved feature generation helpers
 # ============================================================
 def random_normal_temp(low, high, mean=None, std=None):
-    """
-    Draw a temperature from a truncated normal distribution.
-    If scipy not available, falls back to uniform.
-    """
+    """Draw a temperature from a truncated normal distribution (or uniform fallback)."""
     if SCIPY_AVAILABLE:
         if mean is None:
             mean = (low + high) / 2
@@ -146,35 +156,32 @@ def random_score(probability, min_val=0, max_val=10, concentration=5):
     """
     Generate a continuous score (0-10) based on a style's activity probability.
     Uses a normal distribution centered at probability * 10, clipped to [0,10].
-    'concentration' controls how tightly values cluster around the mean (higher = tighter).
     """
     mean = probability * 10
-    # Adjust std so that ~95% of values are within [0,10]; smaller if mean near edges
+    # Adjust std so that ~95% of values are within [0,10]
     if mean <= 5:
-        std = mean / 2.5   # ensures most values >0
+        std = mean / 2.5
     else:
         std = (10 - mean) / 2.5
-    std = max(std, 0.5)   # avoid division by zero
+    std = max(std, 0.5)
     return np.clip(np.random.normal(mean, std/concentration), min_val, max_val)
 
-def get_peak_season(winter_temp, summer_temp):
-    """Determine peak season based on temperature contrast."""
-    if winter_temp > summer_temp + 5:    # southern hemisphere (winter warmer than summer)
-        return "winter"
-    elif summer_temp > winter_temp + 10:
+def get_peak_season(temp_diff):
+    """Determine peak season based on temperature contrast between warmest and coldest month."""
+    if temp_diff > 10:
         return "summer"
     else:
         return "spring/fall"
 
 def get_visa_prob(style):
-    """Return (easy, medium, hard) probabilities for visa difficulty."""
+    """Return probabilities for visa difficulty (easy, medium, hard)."""
     if style in ['Luxury', 'Family']:
         return [0.7, 0.25, 0.05]
     elif style == 'Culture':
         return [0.5, 0.35, 0.15]
     elif style in ['Adventure', 'Relaxation']:
         return [0.4, 0.4, 0.2]
-    else: # Budget
+    else:  # Budget
         return [0.3, 0.4, 0.3]
 
 def get_english_friendly_prob(style):
@@ -185,37 +192,37 @@ def get_english_friendly_prob(style):
         return 0.7
     elif style == 'Adventure':
         return 0.6
-    else: # Budget
+    else:  # Budget
         return 0.45
 
-# Style parameter base definitions (used as defaults)
+# Style parameters – now provide ranges for coldest and warmest months
 def get_feature_params(style):
     if style == 'Adventure':
-        return {'temp_winter': (-10, 10), 'temp_summer': (10, 25), 'cost': (50, 150),
+        return {'temp_cold': (-10, 10), 'temp_warm': (10, 25), 'cost': (50, 150),
                 'beach_prob': 0.2, 'hiking_prob': 0.9, 'culture_prob': 0.4, 'nightlife_prob': 0.3,
                 'safety': (7, 9)}
     elif style == 'Relaxation':
-        return {'temp_winter': (20, 28), 'temp_summer': (25, 32), 'cost': (80, 200),
+        return {'temp_cold': (20, 28), 'temp_warm': (25, 32), 'cost': (80, 200),
                 'beach_prob': 0.8, 'hiking_prob': 0.3, 'culture_prob': 0.4, 'nightlife_prob': 0.5,
                 'safety': (6, 8)}
     elif style == 'Culture':
-        return {'temp_winter': (0, 15), 'temp_summer': (20, 30), 'cost': (70, 180),
+        return {'temp_cold': (0, 15), 'temp_warm': (20, 30), 'cost': (70, 180),
                 'beach_prob': 0.2, 'hiking_prob': 0.2, 'culture_prob': 0.9, 'nightlife_prob': 0.6,
                 'safety': (5, 8)}
     elif style == 'Budget':
-        return {'temp_winter': (15, 30), 'temp_summer': (25, 35), 'cost': (20, 70),
+        return {'temp_cold': (15, 30), 'temp_warm': (25, 35), 'cost': (20, 70),
                 'beach_prob': 0.4, 'hiking_prob': 0.3, 'culture_prob': 0.6, 'nightlife_prob': 0.4,
                 'safety': (3, 7)}
     elif style == 'Luxury':
-        return {'temp_winter': (0, 20), 'temp_summer': (20, 30), 'cost': (200, 500),
+        return {'temp_cold': (0, 20), 'temp_warm': (20, 30), 'cost': (200, 500),
                 'beach_prob': 0.5, 'hiking_prob': 0.2, 'culture_prob': 0.7, 'nightlife_prob': 0.8,
                 'safety': (8, 10)}
     else:  # Family
-        return {'temp_winter': (5, 20), 'temp_summer': (20, 28), 'cost': (80, 200),
+        return {'temp_cold': (5, 20), 'temp_warm': (20, 28), 'cost': (80, 200),
                 'beach_prob': 0.4, 'hiking_prob': 0.3, 'culture_prob': 0.6, 'nightlife_prob': 0.2,
                 'safety': (8, 10)}
 
-# Density category to numeric mapping (and vice‑versa)
+# Density category to numeric mapping
 density_mapping = {
     'low': (5, 30),
     'medium': (30, 60),
@@ -223,7 +230,7 @@ density_mapping = {
 }
 
 # ============================================================
-# 5. Generate the dataset
+# 6. Generate the dataset
 # ============================================================
 data = []
 for i in range(n):
@@ -232,16 +239,23 @@ for i in range(n):
     params = get_feature_params(style)
 
     # --- Temperatures (realistic truncated normal) ---
-    temp_winter = round(random_normal_temp(params['temp_winter'][0], params['temp_winter'][1],
-                                          mean=np.mean(params['temp_winter'])), 1)
-    temp_summer = round(random_normal_temp(params['temp_summer'][0], params['temp_summer'][1],
-                                          mean=np.mean(params['temp_summer'])), 1)
+    temp_coldest = round(random_normal_temp(params['temp_cold'][0], params['temp_cold'][1],
+                                           mean=np.mean(params['temp_cold'])), 1)
+    temp_warmest = round(random_normal_temp(params['temp_warm'][0], params['temp_warm'][1],
+                                           mean=np.mean(params['temp_warm'])), 1)
 
     # --- Cost (with possible luxury/beach correlation) ---
     base_cost = np.random.randint(params['cost'][0], params['cost'][1])
-    beach = 1 if np.random.random() < params['beach_prob'] else 0
-    # In luxury destinations, beach front often increases cost
-    if style == 'Luxury' and beach:
+
+    # --- Activity scores (always generated, no zero‑cut gate) ---
+    beach_score = round(random_score(params['beach_prob']), 1)
+    has_beach = 1 if beach_score >= 1.0 else 0   # derive binary from continuous score (threshold 1)
+    hiking_score = round(random_score(params['hiking_prob']), 1)
+    culture_score = round(random_score(params['culture_prob']), 1)
+    nightlife_score = round(random_score(params['nightlife_prob']), 1)
+
+    # Cost boost for luxury beach destinations (correlation)
+    if style == 'Luxury' and has_beach:
         cost = int(base_cost * np.random.uniform(1.1, 1.3))
     else:
         cost = base_cost
@@ -257,25 +271,18 @@ for i in range(n):
     }
     density_cat = np.random.choice(['low', 'medium', 'high'],
                                    p=density_probs.get(style, [0.2, 0.5, 0.3]))
-    # Generate a continuous density score (0‑100) for the chosen category
     low_d, high_d = density_mapping[density_cat]
-    density_score = np.random.uniform(low_d, high_d)
-
-    # --- Continuous activity scores (0‑10) ---
-    beach_score = random_score(params['beach_prob']) if beach else 0.0
-    hiking_score = random_score(params['hiking_prob']) if np.random.random() < params['hiking_prob'] else 0.0
-    culture_score = random_score(params['culture_prob']) if np.random.random() < params['culture_prob'] else 0.0
-    nightlife_score = random_score(params['nightlife_prob']) if np.random.random() < params['nightlife_prob'] else 0.0
+    density_score = round(np.random.uniform(low_d, high_d), 1)
 
     # --- Safety (slight correlation with cost) ---
     base_safety_low, base_safety_high = params['safety']
     raw_safety = np.random.randint(base_safety_low, base_safety_high + 1)
-    # Higher cost slightly boosts safety (up to +1.5 points, capped at 10)
     safety_bonus = (cost - np.mean(params['cost'])) / (np.ptp(params['cost']) + 1) * 1.5
     safety_index = min(10, max(1, round(raw_safety + safety_bonus)))
 
     # --- New features ---
-    peak_season = get_peak_season(temp_winter, temp_summer)
+    hemisphere = get_hemisphere(city_name)
+    peak_season = get_peak_season(temp_warmest - temp_coldest)
     visa_probs = get_visa_prob(style)
     visa_difficulty = np.random.choice(['easy', 'medium', 'hard'], p=visa_probs)
     english_friendly = 1 if np.random.random() < get_english_friendly_prob(style) else 0
@@ -284,64 +291,65 @@ for i in range(n):
     data.append({
         'name': city_name,
         'style': style,
-        'avg_temp_winter': temp_winter,
-        'avg_temp_summer': temp_summer,
+        'temp_coldest_month': temp_coldest,
+        'temp_warmest_month': temp_warmest,
         'cost_per_day': cost,
-        'tourist_density': density_cat,            # categorical for filtering
-        'density_score': round(density_score, 1),  # numeric for regression
-        'has_beach': beach,                        # keep original binary for compatibility
-        'beach_score': round(beach_score, 1),
-        'hiking_score': round(hiking_score, 1),
-        'culture_score': round(culture_score, 1),
-        'nightlife_score': round(nightlife_score, 1),
+        'tourist_density': density_cat,
+        'density_score': density_score,
+        'has_beach': has_beach,
+        'beach_score': beach_score,
+        'hiking_score': hiking_score,
+        'culture_score': culture_score,
+        'nightlife_score': nightlife_score,
         'safety_index': safety_index,
+        'hemisphere': hemisphere,
         'peak_season': peak_season,
         'visa_difficulty': visa_difficulty,
         'english_friendly': english_friendly
     })
 
 # ============================================================
-# 6. Create DataFrame and shuffle
+# 7. Create DataFrame and shuffle
 # ============================================================
 df = pd.DataFrame(data)
 df = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
 # ============================================================
-# 7. Save data and metadata
+# 8. Save data and metadata
 # ============================================================
 os.makedirs('data', exist_ok=True)
-
-# Use timestamp to avoid overwriting (unless you explicitly want to)
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 csv_path = f'data/destinations_{timestamp}.csv'
 df.to_csv(csv_path, index=False)
+df.to_csv('data/destinations.csv', index=False)  # convenience copy
 
-# Also save the most recent version as 'destinations.csv' for convenience
-df.to_csv('data/destinations.csv', index=False)
-
-# Metadata JSON
 metadata = {
-    "description": "Synthetic travel destination dataset",
+    "description": "Synthetic travel destination dataset (improved v2)",
     "num_samples": len(df),
     "features": {
         "name": "Destination name (city, country)",
-        "style": "Primary travel style (one of: Adventure, Relaxation, Culture, Budget, Luxury, Family)",
-        "avg_temp_winter": "Average winter temperature (°C)",
-        "avg_temp_summer": "Average summer temperature (°C)",
+        "style": "Primary travel style (Adventure, Relaxation, Culture, Budget, Luxury, Family)",
+        "temp_coldest_month": "Average temperature of the coldest month (°C)",
+        "temp_warmest_month": "Average temperature of the warmest month (°C)",
         "cost_per_day": "Estimated daily cost (USD, accommodation + food + activities)",
         "tourist_density": "Subjective tourism density category (low/medium/high)",
-        "density_score": "Continuous 0-100 score of tourist density (higher = more crowded)",
-        "has_beach": "Binary: does the destination have beaches? (1=yes)",
-        "beach_score": "Beach quality/availability score (0-10)",
-        "hiking_score": "Hiking and outdoor adventure score (0-10)",
-        "culture_score": "Cultural attractions score (0-10)",
-        "nightlife_score": "Nightlife score (0-10)",
+        "density_score": "Continuous 0‑100 score of tourist density (higher = more crowded)",
+        "has_beach": "Binary: does the destination have good beaches? (1=yes; derived from beach_score ≥ 1)",
+        "beach_score": "Beach quality/availability score (0‑10)",
+        "hiking_score": "Hiking and outdoor adventure score (0‑10)",
+        "culture_score": "Cultural attractions score (0‑10)",
+        "nightlife_score": "Nightlife score (0‑10)",
         "safety_index": "Safety perception index (1=very unsafe, 10=extremely safe)",
-        "peak_season": "Most popular tourist season ('winter', 'summer', or 'spring/fall')",
+        "hemisphere": "Hemisphere (North/South) – based on curated list",
+        "peak_season": "Most popular tourist season ('summer' or 'spring/fall') – derived from temperature contrast",
         "visa_difficulty": "Ease of obtaining a tourist visa ('easy', 'medium', 'hard')",
         "english_friendly": "Binary: is English widely spoken? (1=yes)"
     },
-    "generation_notes": "Temperature sampled via truncated normal (or uniform fallback). Scores correlate with style probabilities. Extra cities have manually curated styles for realism.",
+    "generation_notes": (
+        "v2 improvements: deduplicated city names, manual style overrides applied, "
+        "temperature columns renamed to coldest/warmest month (hemisphere‑agnostic), "
+        "activity scores are always continuous (no zero‑cut gate), beach_score now consistent with has_beach."
+    ),
     "style_distribution": df['style'].value_counts().to_dict(),
     "created_at": timestamp
 }

@@ -1,0 +1,4 @@
+model,best_cv_f1,cv_std,best_params,test_f1,test_accuracy,timestamp
+LogisticRegression,1.0,0.0,"{'classifier__C': 0.1, 'classifier__penalty': 'l2', 'classifier__solver': 'lbfgs'}",1.0,1.0,2026-04-27T15:59:43.368190
+RandomForest,1.0,0.0,"{'classifier__max_depth': None, 'classifier__min_samples_split': 2, 'classifier__n_estimators': 50}",1.0,1.0,2026-04-27T15:59:43.368190
+GradientBoosting,0.9907692307692308,0.01846153846153844,"{'classifier__learning_rate': 0.05, 'classifier__max_depth': 3, 'classifier__n_estimators': 50}",1.0,1.0,2026-04-27T15:59:43.368190

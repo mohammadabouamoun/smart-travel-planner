@@ -1,0 +1,32 @@
+{
+  "description": "Synthetic travel destination dataset",
+  "num_samples": 158,
+  "features": {
+    "name": "Destination name (city, country)",
+    "style": "Primary travel style (one of: Adventure, Relaxation, Culture, Budget, Luxury, Family)",
+    "avg_temp_winter": "Average winter temperature (\u00b0C)",
+    "avg_temp_summer": "Average summer temperature (\u00b0C)",
+    "cost_per_day": "Estimated daily cost (USD, accommodation + food + activities)",
+    "tourist_density": "Subjective tourism density category (low/medium/high)",
+    "density_score": "Continuous 0-100 score of tourist density (higher = more crowded)",
+    "has_beach": "Binary: does the destination have beaches? (1=yes)",
+    "beach_score": "Beach quality/availability score (0-10)",
+    "hiking_score": "Hiking and outdoor adventure score (0-10)",
+    "culture_score": "Cultural attractions score (0-10)",
+    "nightlife_score": "Nightlife score (0-10)",
+    "safety_index": "Safety perception index (1=very unsafe, 10=extremely safe)",
+    "peak_season": "Most popular tourist season ('winter', 'summer', or 'spring/fall')",
+    "visa_difficulty": "Ease of obtaining a tourist visa ('easy', 'medium', 'hard')",
+    "english_friendly": "Binary: is English widely spoken? (1=yes)"
+  },
+  "generation_notes": "Temperature sampled via truncated normal (or uniform fallback). Scores correlate with style probabilities. Extra cities have manually curated styles for realism.",
+  "style_distribution": {
+    "Culture": 42,
+    "Adventure": 32,
+    "Relaxation": 26,
+    "Budget": 21,
+    "Luxury": 21,
+    "Family": 16
+  },
+  "created_at": "20260427_143839"
+}
