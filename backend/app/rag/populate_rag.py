@@ -1,7 +1,7 @@
 import asyncio
 import logging
-from backend.app.database import AsyncSessionLocal
-from backend.app.models import DestinationDocument
+from backend.app.core.database import AsyncSessionLocal
+from backend.app.core.models import DestinationDocument
 from sentence_transformers import SentenceTransformer
 from sqlalchemy import text  # Import the text function
 

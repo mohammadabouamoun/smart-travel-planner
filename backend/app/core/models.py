@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from pgvector.sqlalchemy import Vector
-from backend.app.database import Base   # <-- fixed import
+from backend.app.core.database import Base, Vector
 import uuid
 
 class User(Base):

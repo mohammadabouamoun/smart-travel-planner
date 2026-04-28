@@ -1,6 +1,6 @@
 import asyncio
-from backend.app.database import engine, Base
-import backend.app.models  # this will load models to register with Base
+from backend.app.core.database import engine, Base
+from backend.app.core import models 
 from sqlalchemy import text
 
 async def init():
