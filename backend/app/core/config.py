@@ -36,4 +36,14 @@ class Settings(BaseSettings):
     # Cache TTL (seconds)
     WEATHER_CACHE_TTL: int = Field(600, ge=0)
 
+
+    # Security
+    JWT_SECRET_KEY: str = Field(..., min_length=32)    
+    JWT_ALGORITHM: str = Field("HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(30, ge=0)
+
+
+    # Discord Monitoring
+    DISCORD_WEBHOOK_URL: str | None = None
+
 settings = Settings()

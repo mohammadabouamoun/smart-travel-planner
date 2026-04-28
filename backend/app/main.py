@@ -2,11 +2,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 import logging
 import structlog
+from backend.app.api import auth, chat
 from backend.app.core.config import settings
 from backend.app.core.database import engine
 from backend.app.agent.graph import build_agent
 
-# Structured logging (identical to your previous config)
+# Structured logging
 structlog.configure(
     processors=[
         structlog.stdlib.filter_by_level,
@@ -55,10 +56,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+ # Include routers (outside lifespan)
+app.include_router(auth.router)
+app.include_router(chat.router)
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}
-
-# Include chat router
-from backend.app.api import chat
-app.include_router(chat.router)
