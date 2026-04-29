@@ -21,7 +21,10 @@ class Settings(BaseSettings):
 
     # LLM
     GROQ_API_KEY: str = Field(..., min_length=1)
-
+    GEMINI_API_KEY: str | None = None
+    OPENAI_API_KEY: str | None = None
+    CEREBRAS_API_KEY: str | None = None 
+    OPENROUTER_API_KEY: str | None = None
     # Weather API (optional)
     OPENWEATHER_API_KEY: str | None = None
 

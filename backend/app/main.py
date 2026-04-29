@@ -3,6 +3,7 @@ from fastapi import FastAPI
 import logging
 import structlog
 from backend.app.api import auth, chat
+from fastapi.middleware.cors import CORSMiddleware
 from backend.app.core.config import settings
 from backend.app.core.database import engine
 from backend.app.agent.graph import build_agent
@@ -55,6 +56,14 @@ async def lifespan(app: FastAPI):
     logger.info("Shutdown complete.")
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
  # Include routers (outside lifespan)
 app.include_router(auth.router)
