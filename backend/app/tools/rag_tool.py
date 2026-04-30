@@ -1,6 +1,6 @@
 import logging
-from pydantic import BaseModel, Field
 from backend.app.rag.retrieval import retrieve_similar_destinations
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
@@ -10,11 +10,10 @@ class RAGToolInput(BaseModel):
 class RAGToolOutput(BaseModel):
     result: str
 
-def create_rag_tool(embedder):
-    """Factory that returns an async function with embedder bound."""
+def create_rag_tool():   # no embedder parameter
     async def rag_tool(input: RAGToolInput) -> RAGToolOutput:
         try:
-            results = await retrieve_similar_destinations(input.query, embedder, top_k=3)
+            results = await retrieve_similar_destinations(input.query, top_k=3)
         except Exception as e:
             logger.error(f"RAG tool failed: {e}", exc_info=True)
             return RAGToolOutput(result="Sorry, I couldn't retrieve destination info at the moment.")

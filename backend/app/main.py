@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.app.core.config import settings
 from backend.app.core.database import engine
 from backend.app.agent.graph import build_agent
-
+import joblib
 # Structured logging
 structlog.configure(
     processors=[
@@ -28,21 +28,17 @@ logging.basicConfig(level=logging.INFO)
 async def lifespan(app: FastAPI):
     logger.info("Starting up...")
     try:
-        import joblib
-        from sentence_transformers import SentenceTransformer
+        
+       # from sentence_transformers import SentenceTransformer
 
         logger.info("Loading ML model...")
         app.state.model = joblib.load(settings.MODEL_PATH)
 
-        logger.info("Loading sentence transformer...")
-        app.state.embedder = SentenceTransformer('all-MiniLM-L6-v2')
+     #   logger.info("Loading sentence transformer...")
+       # app.state.embedder = SentenceTransformer('all-MiniLM-L6-v2')
 
         logger.info("Creating agent...")
-        app.state.agent = build_agent(
-            app.state.model,
-            app.state.embedder,
-            settings
-        )
+        app.state.agent = build_agent(app.state.model, settings)
         app.state.settings = settings
         logger.info("Startup complete.")
     except Exception as e:

@@ -14,9 +14,8 @@ from backend.app.tools.style_search_tool import create_style_search_tool, StyleS
 
 logger = logging.getLogger(__name__)
 
-def build_agent(model, embedder, settings):
-    # Create tools with dependencies injected
-    rag_tool = create_rag_tool(embedder)
+def build_agent(model, settings):          # embedder removed
+    rag_tool = create_rag_tool()           # no argument
     style_tool = create_style_tool(model, settings.DATA_PATH)
     style_search_tool = create_style_search_tool()
 

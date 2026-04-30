@@ -7,9 +7,6 @@ def get_agent(request: Request):
 def get_model(request: Request):
     return request.app.state.model
 
-def get_embedder(request: Request):
-    return request.app.state.embedder
-
 def get_settings(request: Request):
     return request.app.state.settings
 
