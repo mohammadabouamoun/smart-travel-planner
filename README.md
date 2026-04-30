@@ -200,6 +200,19 @@ Total						$0.00048
 - **Logging**: Structured logging on failure.
 
 ---
+## LangSmith Trace Breakdown
+
+This trace illustrates the end-to-end execution of the agent:
+
+- **User Input:** "I want a warm beach destination"
+- **Agent Decision:** Routes request to `style_search_wrapper`
+- **Tool Execution:** Retrieves destinations based on relaxation style
+- **LLM Response:** Generates final recommendations
+
+ ![LangSmith Trace](assets/langsmith-trace.png)
+
+---
+
 
 ## Docker
 
